@@ -69,7 +69,7 @@ export function Sidebar({
       height="68.17659mm"
       viewBox="0 0 315.53946 68.17659"
       version="1.1"
-      className="h-6 w-auto text-gray-800"
+      className="h-4 w-auto text-gray-800"
     >
       <path
         fill="currentColor"
