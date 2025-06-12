@@ -1,4 +1,4 @@
-import { google } from '@ai-sdk/google';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { generateText, streamText } from 'ai';
 import { getApiKey } from './apiKeys';
 
@@ -32,9 +32,15 @@ export async function generateAIResponse(
     console.log('API key length:', apiKey.length);
     console.log('API key prefix:', apiKey.substring(0, 10) + '...');
 
-    // Create Google AI instance with user's API key and generate response
+    // Create custom Google provider instance with user's API key
+    console.log('Creating custom Google provider instance...');
+    const google = createGoogleGenerativeAI({
+      apiKey: apiKey,
+      baseURL: 'https://generativelanguage.googleapis.com/v1beta'
+    });
+    
     console.log('Creating Google AI model instance...');
-    const googleModel = google(model, { apiKey });
+    const googleModel = google(model);
     
     console.log('Generating text with AI model...');
     const { text } = await generateText({
@@ -118,9 +124,15 @@ export async function* streamAIResponse(
 
     console.log('Streaming with Google AI model...');
 
+    // Create custom Google provider instance with user's API key
+    const google = createGoogleGenerativeAI({
+      apiKey: apiKey,
+      baseURL: 'https://generativelanguage.googleapis.com/v1beta'
+    });
+
     // Stream response using the correct AI SDK pattern
     const { textStream } = await streamText({
-      model: google(model, { apiKey }),
+      model: google(model),
       messages: messages.map(msg => ({
         role: msg.role,
         content: msg.content
