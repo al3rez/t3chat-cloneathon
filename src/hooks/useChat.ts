@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { Chat, Message, AIModel, Thread, DatabaseMessage } from '../types';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './useAuth';
+import { generateAIResponse, getGoogleModelId } from '../lib/aiService';
 
 export function useChat() {
   const [chats, setChats] = useState<Chat[]>([]);
@@ -195,61 +196,89 @@ export function useChat() {
         }
       }
 
-      // Simulate AI response
-      setTimeout(async () => {
-        const aiResponse = `I'm a simulated response for the ${selectedModel} model. Your message was: "${content}". In a real implementation, this would connect to the actual AI API.`;
-        
-        const aiMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          content: aiResponse,
-          role: 'assistant',
-          timestamp: new Date(),
-          thread_id: activeChat.id
-        };
+      // Generate AI response using the user's API key
+      const googleModelId = getGoogleModelId(selectedModel);
+      const aiResult = await generateAIResponse([
+        ...activeChat.messages.map(msg => ({ role: msg.role, content: msg.content })),
+        { role: 'user', content }
+      ], googleModelId);
 
-        const finalChat = {
-          ...updatedChat,
-          messages: [...updatedChat.messages, aiMessage],
-          updatedAt: new Date()
-        };
+      let aiResponse: string;
+      
+      if (aiResult.success && aiResult.content) {
+        aiResponse = aiResult.content;
+      } else {
+        aiResponse = aiResult.error || 'Sorry, I encountered an error while processing your request.';
+      }
+      
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: aiResponse,
+        role: 'assistant',
+        timestamp: new Date(),
+        thread_id: activeChat.id
+      };
 
-        setActiveChat(finalChat);
-        setChats(prev => prev.map(chat => chat.id === activeChat.id ? finalChat : chat));
-        setIsLoading(false);
+      const finalChat = {
+        ...updatedChat,
+        messages: [...updatedChat.messages, aiMessage],
+        updatedAt: new Date()
+      };
 
-        // Save AI response to database
-        try {
-          const { error: aiMessageError } = await supabase
-            .from('messages')
-            .insert({
-              thread_id: activeChat.id,
-              content: aiResponse,
-              role: 'assistant'
-            });
+      setActiveChat(finalChat);
+      setChats(prev => prev.map(chat => chat.id === activeChat.id ? finalChat : chat));
+      setIsLoading(false);
 
-          if (aiMessageError) {
-            console.error('Error saving AI message:', aiMessageError);
-          }
+      // Save AI response to database
+      try {
+        const { error: aiMessageError } = await supabase
+          .from('messages')
+          .insert({
+            thread_id: activeChat.id,
+            content: aiResponse,
+            role: 'assistant'
+          });
 
-          // Update thread updated_at
-          const { error: updateError } = await supabase
-            .from('threads')
-            .update({ updated_at: new Date().toISOString() })
-            .eq('id', activeChat.id);
-
-          if (updateError) {
-            console.error('Error updating thread timestamp:', updateError);
-          }
-
-          // Reload chats to ensure consistency
-          await loadChats();
-        } catch (error) {
-          console.error('Error saving AI response:', error);
+        if (aiMessageError) {
+          console.error('Error saving AI message:', aiMessageError);
         }
-      }, 1500);
+
+        // Update thread updated_at
+        const { error: updateError } = await supabase
+          .from('threads')
+          .update({ updated_at: new Date().toISOString() })
+          .eq('id', activeChat.id);
+
+        if (updateError) {
+          console.error('Error updating thread timestamp:', updateError);
+        }
+
+        // Reload chats to ensure consistency
+        await loadChats();
+      } catch (error) {
+        console.error('Error saving AI response:', error);
+      }
     } catch (error) {
       console.error('Error sending message:', error);
       setIsLoading(false);
+      
+      // Show error message to user
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: 'Sorry, I encountered an error while processing your request. Please check your API key settings.',
+        role: 'assistant',
+        timestamp: new Date(),
+        thread_id: activeChat.id
+      };
+
+      const errorChat = {
+        ...updatedChat,
+        messages: [...updatedChat.messages, errorMessage],
+        updatedAt: new Date()
+      };
+
+      setActiveChat(errorChat);
+      setChats(prev => prev.map(chat => chat.id === activeChat.id ? errorChat : chat));
     }
   }, [activeChat, selectedModel, user, loadChats]);
 
