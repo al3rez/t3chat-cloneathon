@@ -78,10 +78,6 @@ export function ChatMessage({ message }: ChatMessageProps) {
               </div>
             </button>
           </div>
-          
-          <p className="text-xs text-gray-500 mt-1 text-right">
-            {formatDate(message.timestamp)}
-          </p>
         </div>
       </div>
     );
