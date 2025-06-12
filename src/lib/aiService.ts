@@ -12,25 +12,33 @@ export async function generateAIResponse(
   model: string = 'gemini-1.5-flash'
 ): Promise<{ success: boolean; content?: string; error?: string }> {
   try {
-    console.log('Generating AI response with model:', model);
+    console.log('=== AI Response Generation Started ===');
+    console.log('Model requested:', model);
+    console.log('Messages count:', messages.length);
     
     // Get the user's Google API key
+    console.log('Retrieving Google API key...');
     const apiKey = await getApiKey('google');
     
-    console.log('Retrieved API key:', apiKey ? 'Found' : 'Not found');
-    
     if (!apiKey) {
+      console.log('❌ No Google API key found');
       return {
         success: false,
         error: 'Google API key not found. Please add your API key in settings.'
       };
     }
 
-    console.log('Creating Google AI instance with API key');
+    console.log('✅ Google API key retrieved successfully');
+    console.log('API key length:', apiKey.length);
+    console.log('API key prefix:', apiKey.substring(0, 10) + '...');
 
     // Create Google AI instance with user's API key and generate response
+    console.log('Creating Google AI model instance...');
+    const googleModel = google(model, { apiKey });
+    
+    console.log('Generating text with AI model...');
     const { text } = await generateText({
-      model: google(model, { apiKey }),
+      model: googleModel,
       messages: messages.map(msg => ({
         role: msg.role,
         content: msg.content
@@ -39,34 +47,51 @@ export async function generateAIResponse(
       maxTokens: 2048,
     });
 
-    console.log('AI response generated successfully');
+    console.log('✅ AI response generated successfully');
+    console.log('Response length:', text.length);
+    console.log('=== AI Response Generation Completed ===');
 
     return {
       success: true,
       content: text
     };
   } catch (error: any) {
-    console.error('AI generation error:', error);
+    console.error('❌ AI generation error:', error);
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
     
     // Handle specific API errors
-    if (error.message?.includes('API key') || error.message?.includes('apiKey') || error.name?.includes('API_LoadAPIKeyError')) {
+    if (error.message?.includes('API key') || 
+        error.message?.includes('apiKey') || 
+        error.name?.includes('API_LoadAPIKeyError') ||
+        error.message?.includes('API_KEY_INVALID')) {
       return {
         success: false,
         error: 'Invalid or missing Google API key. Please check your API key in settings.'
       };
     }
     
-    if (error.message?.includes('quota')) {
+    if (error.message?.includes('quota') || error.message?.includes('QUOTA_EXCEEDED')) {
       return {
         success: false,
         error: 'API quota exceeded. Please check your Google Cloud billing.'
       };
     }
 
-    if (error.message?.includes('permission') || error.message?.includes('forbidden')) {
+    if (error.message?.includes('permission') || 
+        error.message?.includes('forbidden') || 
+        error.message?.includes('PERMISSION_DENIED')) {
       return {
         success: false,
         error: 'API access denied. Please check your Google API key permissions.'
+      };
+    }
+
+    if (error.message?.includes('INVALID_ARGUMENT')) {
+      return {
+        success: false,
+        error: 'Invalid request parameters. Please try again.'
       };
     }
 
@@ -82,12 +107,16 @@ export async function* streamAIResponse(
   model: string = 'gemini-1.5-flash'
 ): AsyncGenerator<string, void, unknown> {
   try {
+    console.log('Starting AI response streaming...');
+    
     // Get the user's Google API key
     const apiKey = await getApiKey('google');
     
     if (!apiKey) {
       throw new Error('Google API key not found. Please add your API key in settings.');
     }
+
+    console.log('Streaming with Google AI model...');
 
     // Stream response using the correct AI SDK pattern
     const { textStream } = await streamText({
