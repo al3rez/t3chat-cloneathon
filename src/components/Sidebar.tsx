@@ -224,7 +224,7 @@ export function Sidebar({
                   className="flex select-none flex-row items-center justify-between gap-3 rounded-lg px-3 py-3 hover:bg-gray-100 focus:bg-gray-100 focus:outline-2 cursor-pointer transition-colors group"
                 >
                   <div className="flex w-full min-w-0 flex-row items-center gap-3">
-                    <div className="h-8 w-8 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full flex items-center justify-center ring-1 ring-gray-200">
+                    <div className="h-8 w-8 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full flex items-center justify-center ring-1 ring-gray-200 flex-shrink-0">
                       <User className="w-4 h-4 text-white" />
                     </div>
                     <div className="flex min-w-0 flex-col text-gray-800">
