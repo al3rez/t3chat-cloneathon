@@ -41,10 +41,10 @@ export async function generateAIResponse(
     console.error('AI generation error:', error);
     
     // Handle specific API errors
-    if (error.message?.includes('API key')) {
+    if (error.message?.includes('API key') || error.message?.includes('apiKey')) {
       return {
         success: false,
-        error: 'Invalid API key. Please check your Google API key in settings.'
+        error: 'Invalid or missing API key. Please check your Google API key in settings.'
       };
     }
     
