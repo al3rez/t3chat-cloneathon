@@ -36,11 +36,11 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         if (error) {
           setError(error.message)
         } else {
-          setSuccess('Account created successfully! You can now sign in.')
-          setIsSignUp(false)
-          setEmail('')
-          setPassword('')
-          setConfirmPassword('')
+          setSuccess('Account created successfully! You are now signed in.')
+          // Close the modal after a brief delay to show the success message
+          setTimeout(() => {
+            onClose()
+          }, 1500)
         }
       } else {
         const { error } = await signInWithEmail(email, password)
