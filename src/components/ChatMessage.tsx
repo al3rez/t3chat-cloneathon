@@ -38,12 +38,12 @@ export function ChatMessage({ message }: ChatMessageProps) {
           <div 
             role="article" 
             aria-label="Your message"
-            className="rounded-xl border border-purple-200/50 bg-gradient-to-r from-purple-600 to-pink-600 px-4 py-3 text-left shadow-sm"
+            className="rounded-xl border border-gray-200/50 bg-gray-50/50 px-4 py-3 text-left shadow-sm"
           >
             <span className="sr-only">Your message: </span>
             <div className="flex flex-col gap-3">
-              <div className="prose prose-pink max-w-none text-white prose-pre:m-0 prose-pre:bg-transparent prose-pre:p-0">
-                <p className="text-sm leading-relaxed whitespace-pre-wrap m-0">{message.content}</p>
+              <div className="prose prose-gray max-w-none prose-pre:m-0 prose-pre:bg-transparent prose-pre:p-0">
+                <p className="text-sm leading-relaxed whitespace-pre-wrap text-gray-800 m-0">{message.content}</p>
               </div>
             </div>
           </div>
@@ -87,14 +87,14 @@ export function ChatMessage({ message }: ChatMessageProps) {
     );
   }
 
-  // Assistant message
+  // Assistant message - no border, background, just text on default background
   return (
     <div className="flex justify-start mb-6">
       <div className="group relative inline-block max-w-[80%] break-words">
         <div 
           role="article" 
           aria-label="Assistant message"
-          className="rounded-xl border border-gray-200/50 bg-gray-50/50 px-4 py-3 text-left shadow-sm"
+          className="px-4 py-3 text-left"
         >
           <span className="sr-only">Assistant message: </span>
           <div className="flex flex-col gap-3">
