@@ -27,9 +27,9 @@ export async function generateAIResponse(
       apiKey: apiKey
     });
 
-    // Generate response
+    // Generate response using the correct AI SDK pattern
     const { text } = await generateText({
-      model: googleAI.generativeModel(model),
+      model: googleAI(model),
       messages: messages.map(msg => ({
         role: msg.role,
         content: msg.content
@@ -84,9 +84,9 @@ export async function* streamAIResponse(
       apiKey: apiKey
     });
 
-    // Stream response
+    // Stream response using the correct AI SDK pattern
     const { textStream } = await streamText({
-      model: googleAI.generativeModel(model),
+      model: googleAI(model),
       messages: messages.map(msg => ({
         role: msg.role,
         content: msg.content
