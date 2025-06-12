@@ -4,7 +4,7 @@ import { ModelSelector } from './ModelSelector';
 import { AIModel, ModelConfig } from '../types';
 
 interface ChatInputProps {
-  onSendMessage: (message: string) => void;
+  onSendMessage: (message: string, useWebSearch?: boolean) => void;
   isLoading: boolean;
   selectedModel: AIModel;
   models: ModelConfig[];
@@ -19,12 +19,16 @@ export function ChatInput({
   onModelSelect 
 }: ChatInputProps) {
   const [message, setMessage] = useState('');
+  const [webSearchEnabled, setWebSearchEnabled] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Check if current model supports web search (only Gemini models)
+  const supportsWebSearch = selectedModel.includes('gemini');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (message.trim() && !isLoading) {
-      onSendMessage(message.trim());
+      onSendMessage(message.trim(), webSearchEnabled && supportsWebSearch);
       setMessage('');
       if (textareaRef.current) {
         textareaRef.current.style.height = '48px';
@@ -39,6 +43,12 @@ export function ChatInput({
     }
   };
 
+  const toggleWebSearch = () => {
+    if (supportsWebSearch) {
+      setWebSearchEnabled(!webSearchEnabled);
+    }
+  };
+
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = '48px';
@@ -46,6 +56,13 @@ export function ChatInput({
       textareaRef.current.style.height = `${Math.min(scrollHeight, 120)}px`;
     }
   }, [message]);
+
+  // Reset web search when switching to non-Gemini models
+  useEffect(() => {
+    if (!supportsWebSearch) {
+      setWebSearchEnabled(false);
+    }
+  }, [supportsWebSearch]);
 
   return (
     <div className="w-full px-2 pb-2">
@@ -114,11 +131,35 @@ export function ChatInput({
                       
                       <button
                         type="button"
-                        className="inline-flex items-center justify-center whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-purple-500 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-gray-100 hover:text-gray-900 disabled:hover:bg-transparent disabled:hover:text-gray-500 px-3 text-xs -mb-1.5 h-auto gap-2 rounded-full border border-solid border-gray-200 py-1.5 pl-2 pr-2.5 text-gray-600"
-                        aria-label="Web search not available on free plan"
+                        onClick={toggleWebSearch}
+                        disabled={!supportsWebSearch}
+                        className={`inline-flex items-center justify-center whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-purple-500 disabled:cursor-not-allowed disabled:opacity-50 px-3 text-xs -mb-1.5 h-auto gap-2 rounded-full border border-solid py-1.5 pl-2 pr-2.5 ${
+                          webSearchEnabled && supportsWebSearch
+                            ? 'bg-purple-100 border-purple-300 text-purple-700 hover:bg-purple-200'
+                            : supportsWebSearch
+                            ? 'border-gray-200 text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                            : 'border-gray-200 text-gray-400 cursor-not-allowed'
+                        }`}
+                        aria-label={
+                          !supportsWebSearch 
+                            ? "Web search only available with Gemini models"
+                            : webSearchEnabled 
+                            ? "Web search enabled" 
+                            : "Enable web search"
+                        }
+                        title={
+                          !supportsWebSearch 
+                            ? "Web search only available with Gemini models"
+                            : webSearchEnabled 
+                            ? "Web search enabled - responses will include real-time web results" 
+                            : "Enable web search for real-time information"
+                        }
                       >
-                        <Globe className="h-4 w-4" />
+                        <Globe className={`h-4 w-4 ${webSearchEnabled && supportsWebSearch ? 'text-purple-600' : ''}`} />
                         <span className="max-sm:hidden">Search</span>
+                        {webSearchEnabled && supportsWebSearch && (
+                          <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse" />
+                        )}
                       </button>
                       
                       <button

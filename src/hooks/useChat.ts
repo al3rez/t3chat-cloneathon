@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { Chat, Message, AIModel, Thread, DatabaseMessage } from '../types';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './useAuth';
-import { generateAIResponse, getGoogleModelId } from '../lib/aiService';
+import { generateAIResponse, generateAIResponseWithSearch, getGoogleModelId } from '../lib/aiService';
 
 export function useChat() {
   const [chats, setChats] = useState<Chat[]>([]);
@@ -138,13 +138,13 @@ export function useChat() {
     }
   }, [selectedModel, user]);
 
-  const sendMessage = useCallback(async (content: string) => {
+  const sendMessage = useCallback(async (content: string, useWebSearch: boolean = false) => {
     if (!activeChat || !user) {
       console.log('No active chat or user');
       return;
     }
 
-    console.log('Sending message:', content);
+    console.log('Sending message:', content, 'with web search:', useWebSearch);
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -198,17 +198,38 @@ export function useChat() {
 
       // Generate AI response using the user's API key
       const googleModelId = getGoogleModelId(selectedModel);
-      const aiResult = await generateAIResponse([
+      const conversationHistory = [
         ...activeChat.messages.map(msg => ({ role: msg.role, content: msg.content })),
         { role: 'user', content }
-      ], googleModelId);
+      ];
+
+      let aiResult;
+      if (useWebSearch && selectedModel.includes('gemini')) {
+        console.log('Using web search for AI response');
+        aiResult = await generateAIResponseWithSearch(conversationHistory, googleModelId);
+      } else {
+        console.log('Using standard AI response');
+        aiResult = await generateAIResponse(conversationHistory, googleModelId);
+      }
 
       let aiResponse: string;
+      let sources: any[] = [];
       
       if (aiResult.success && aiResult.content) {
         aiResponse = aiResult.content;
+        sources = aiResult.sources || [];
       } else {
         aiResponse = aiResult.error || 'Sorry, I encountered an error while processing your request.';
+      }
+
+      // Add sources information if available
+      if (sources && sources.length > 0) {
+        aiResponse += '\n\n**Sources:**\n';
+        sources.forEach((source, index) => {
+          if (source.uri) {
+            aiResponse += `${index + 1}. [${source.title || 'Source'}](${source.uri})\n`;
+          }
+        });
       }
       
       const aiMessage: Message = {

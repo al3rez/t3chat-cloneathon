@@ -7,6 +7,16 @@ export interface ChatMessage {
   content: string;
 }
 
+export interface AIResponseWithSources {
+  success: boolean;
+  content?: string;
+  sources?: Array<{
+    uri?: string;
+    title?: string;
+  }>;
+  error?: string;
+}
+
 export async function generateAIResponse(
   messages: ChatMessage[],
   model: string = 'gemini-1.5-flash'
@@ -104,6 +114,117 @@ export async function generateAIResponse(
     return {
       success: false,
       error: error.message || 'Failed to generate AI response'
+    };
+  }
+}
+
+export async function generateAIResponseWithSearch(
+  messages: ChatMessage[],
+  model: string = 'gemini-1.5-pro'
+): Promise<AIResponseWithSources> {
+  try {
+    console.log('=== AI Response with Web Search Started ===');
+    console.log('Model requested:', model);
+    console.log('Messages count:', messages.length);
+    
+    // Get the user's Google API key
+    console.log('Retrieving Google API key...');
+    const apiKey = await getApiKey('google');
+    
+    if (!apiKey) {
+      console.log('❌ No Google API key found');
+      return {
+        success: false,
+        error: 'Google API key not found. Please add your API key in settings.'
+      };
+    }
+
+    console.log('✅ Google API key retrieved successfully');
+
+    // Create custom Google provider instance with user's API key
+    console.log('Creating custom Google provider instance with search grounding...');
+    const google = createGoogleGenerativeAI({
+      apiKey: apiKey,
+      baseURL: 'https://generativelanguage.googleapis.com/v1beta'
+    });
+    
+    console.log('Creating Google AI model instance with search grounding...');
+    const googleModel = google(model, {
+      useSearchGrounding: true,
+    });
+    
+    console.log('Generating text with AI model and web search...');
+    const { text, sources, providerMetadata } = await generateText({
+      model: googleModel,
+      messages: messages.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      })),
+      temperature: 0.7,
+      maxTokens: 2048,
+    });
+
+    console.log('✅ AI response with web search generated successfully');
+    console.log('Response length:', text.length);
+    console.log('Sources found:', sources?.length || 0);
+    
+    // Access the grounding metadata
+    const metadata = providerMetadata?.google;
+    const groundingMetadata = metadata?.groundingMetadata;
+    const safetyRatings = metadata?.safetyRatings;
+    
+    console.log('Grounding metadata:', groundingMetadata);
+    console.log('Safety ratings:', safetyRatings);
+    console.log('=== AI Response with Web Search Completed ===');
+
+    return {
+      success: true,
+      content: text,
+      sources: sources || []
+    };
+  } catch (error: any) {
+    console.error('❌ AI generation with search error:', error);
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    
+    // Handle specific API errors
+    if (error.message?.includes('API key') || 
+        error.message?.includes('apiKey') || 
+        error.name?.includes('API_LoadAPIKeyError') ||
+        error.message?.includes('API_KEY_INVALID')) {
+      return {
+        success: false,
+        error: 'Invalid or missing Google API key. Please check your API key in settings.'
+      };
+    }
+    
+    if (error.message?.includes('quota') || error.message?.includes('QUOTA_EXCEEDED')) {
+      return {
+        success: false,
+        error: 'API quota exceeded. Please check your Google Cloud billing.'
+      };
+    }
+
+    if (error.message?.includes('permission') || 
+        error.message?.includes('forbidden') || 
+        error.message?.includes('PERMISSION_DENIED')) {
+      return {
+        success: false,
+        error: 'API access denied. Please check your Google API key permissions.'
+      };
+    }
+
+    if (error.message?.includes('INVALID_ARGUMENT')) {
+      return {
+        success: false,
+        error: 'Invalid request parameters. Please try again.'
+      };
+    }
+
+    return {
+      success: false,
+      error: error.message || 'Failed to generate AI response with web search'
     };
   }
 }

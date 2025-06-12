@@ -24,16 +24,16 @@ export function ChatApp() {
     setSelectedModel
   } = useChat();
 
-  const handleSendMessage = async (message: string) => {
+  const handleSendMessage = async (message: string, useWebSearch: boolean = false) => {
     if (!activeChat) {
       // Wait for the new chat to be created before sending the message
       const newChat = await createNewChat();
       if (newChat) {
         // Send the message to the newly created chat
-        sendMessage(message);
+        sendMessage(message, useWebSearch);
       }
     } else {
-      sendMessage(message);
+      sendMessage(message, useWebSearch);
     }
   };
 
@@ -43,10 +43,10 @@ export function ChatApp() {
       const newChat = await createNewChat();
       if (newChat) {
         // Send the prompt to the newly created chat
-        sendMessage(prompt);
+        sendMessage(prompt, false);
       }
     } else {
-      sendMessage(prompt);
+      sendMessage(prompt, false);
     }
   };
 
