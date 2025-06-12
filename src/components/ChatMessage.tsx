@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Copy, RotateCcw, Edit3, Check } from 'lucide-react';
 import { Message } from '../types';
-import { formatDate } from '../utils/dateUtils';
 
 interface ChatMessageProps {
   message: Message;
@@ -122,10 +121,6 @@ export function ChatMessage({ message }: ChatMessageProps) {
             </div>
           </button>
         </div>
-        
-        <p className="text-xs text-gray-500 mt-1 text-left">
-          {formatDate(message.timestamp)}
-        </p>
       </div>
     </div>
   );
