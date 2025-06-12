@@ -66,8 +66,11 @@ export async function getApiKey(provider: 'google' | 'openai' | 'anthropic'): Pr
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
+      console.log('No authenticated user found');
       return null;
     }
+
+    console.log(`Getting API key for provider: ${provider}, user: ${user.id}`);
 
     // Get the encrypted key
     const { data: apiKeyRecord, error: fetchError } = await supabase
@@ -77,9 +80,17 @@ export async function getApiKey(provider: 'google' | 'openai' | 'anthropic'): Pr
       .eq('provider', provider)
       .single();
 
-    if (fetchError || !apiKeyRecord) {
+    if (fetchError) {
+      console.log('Fetch error:', fetchError);
       return null;
     }
+
+    if (!apiKeyRecord) {
+      console.log('No API key record found');
+      return null;
+    }
+
+    console.log('Found encrypted API key record');
 
     const userSecret = getUserSecret(user.id);
 
@@ -95,6 +106,12 @@ export async function getApiKey(provider: 'google' | 'openai' | 'anthropic'): Pr
       return null;
     }
 
+    if (!decryptedKey) {
+      console.log('Decryption returned null/empty');
+      return null;
+    }
+
+    console.log('Successfully decrypted API key');
     return decryptedKey;
   } catch (error) {
     console.error('Get API key error:', error);
