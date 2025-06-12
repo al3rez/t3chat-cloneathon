@@ -71,9 +71,9 @@ export function ChatMessage({ message }: ChatMessageProps) {
               className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-purple-400 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-gray-100 hover:text-gray-900 disabled:hover:bg-transparent disabled:hover:text-gray-600 text-xs h-8 w-8 rounded-lg p-0 bg-white/90 backdrop-blur-sm"
               aria-label="Copy message"
             >
-              <div className="relative size-4">
-                <Copy className={`absolute inset-0 transition-all duration-200 ease-snappy ${copied ? 'scale-0 opacity-0' : 'scale-100 opacity-100'}`} />
-                <Check className={`absolute inset-0 transition-all duration-200 ease-snappy ${copied ? 'scale-100 opacity-100' : 'scale-0 opacity-0'}`} />
+              <div className="relative w-4 h-4">
+                <Copy className={`absolute inset-0 w-4 h-4 transition-all duration-200 ease-snappy ${copied ? 'scale-0 opacity-0' : 'scale-100 opacity-100'}`} />
+                <Check className={`absolute inset-0 w-4 h-4 transition-all duration-200 ease-snappy ${copied ? 'scale-100 opacity-100' : 'scale-0 opacity-0'}`} />
               </div>
             </button>
           </div>
@@ -106,9 +106,9 @@ export function ChatMessage({ message }: ChatMessageProps) {
             className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-purple-400 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-gray-100 hover:text-gray-900 disabled:hover:bg-transparent disabled:hover:text-gray-600 text-xs h-8 w-8 rounded-lg p-0"
             aria-label="Copy message"
           >
-            <div className="relative size-4">
-              <Copy className={`absolute inset-0 transition-all duration-200 ease-snappy ${copied ? 'scale-0 opacity-0' : 'scale-100 opacity-100'}`} />
-              <Check className={`absolute inset-0 transition-all duration-200 ease-snappy ${copied ? 'scale-100 opacity-100' : 'scale-0 opacity-0'}`} />
+            <div className="relative w-4 h-4">
+              <Copy className={`absolute inset-0 w-4 h-4 transition-all duration-200 ease-snappy ${copied ? 'scale-0 opacity-0' : 'scale-100 opacity-100'}`} />
+              <Check className={`absolute inset-0 w-4 h-4 transition-all duration-200 ease-snappy ${copied ? 'scale-100 opacity-100' : 'scale-0 opacity-0'}`} />
             </div>
           </button>
           
