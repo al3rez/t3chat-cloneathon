@@ -1,5 +1,4 @@
 import React from 'react';
-import { User, Bot } from 'lucide-react';
 import { Message } from '../types';
 import { formatDate } from '../utils/dateUtils';
 
@@ -11,14 +10,8 @@ export function ChatMessage({ message }: ChatMessageProps) {
   const isUser = message.role === 'user';
 
   return (
-    <div className={`flex space-x-4 ${isUser ? 'justify-end' : 'justify-start'} mb-6`}>
-      {!isUser && (
-        <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center flex-shrink-0">
-          <Bot className="w-4 h-4 text-white" />
-        </div>
-      )}
-      
-      <div className={`max-w-[70%] ${isUser ? 'order-first' : ''}`}>
+    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-6`}>
+      <div className={`max-w-[70%] ${isUser ? '' : ''}`}>
         <div className={`
           p-4 rounded-2xl shadow-sm
           ${isUser 
@@ -32,12 +25,6 @@ export function ChatMessage({ message }: ChatMessageProps) {
           {formatDate(message.timestamp)}
         </p>
       </div>
-
-      {isUser && (
-        <div className="w-8 h-8 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full flex items-center justify-center flex-shrink-0">
-          <User className="w-4 h-4 text-white" />
-        </div>
-      )}
     </div>
   );
 }
