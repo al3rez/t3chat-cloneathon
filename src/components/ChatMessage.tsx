@@ -103,7 +103,7 @@ export function ChatMessage({ message, selectedModel }: ChatMessageProps) {
   // Assistant message - no border, background, just text on default background
   return (
     <div className="flex justify-start mb-6">
-      <div className="w-full max-w-[80%]">
+      <div className="group w-full max-w-[80%]">
         <div 
           role="article" 
           aria-label="Assistant message"
@@ -117,8 +117,8 @@ export function ChatMessage({ message, selectedModel }: ChatMessageProps) {
           </div>
         </div>
         
-        {/* Action buttons - positioned under the message, aligned to the left */}
-        <div className="flex items-center gap-1 mt-2 px-4">
+        {/* Action buttons and model - positioned under the message, aligned to the left, only visible on hover */}
+        <div className="flex items-center gap-1 mt-2 px-4 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
           <button
             onClick={handleCopy}
             className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-purple-400 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-gray-100 hover:text-gray-900 disabled:hover:bg-transparent disabled:hover:text-gray-600 text-xs h-8 w-8 rounded-lg p-0"
