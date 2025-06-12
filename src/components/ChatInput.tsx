@@ -157,9 +157,6 @@ export function ChatInput({
                       >
                         <Globe className={`h-4 w-4 ${webSearchEnabled && supportsWebSearch ? 'text-purple-600' : ''}`} />
                         <span className="max-sm:hidden">Search</span>
-                        {webSearchEnabled && supportsWebSearch && (
-                          <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse" />
-                        )}
                       </button>
                       
                       <button
