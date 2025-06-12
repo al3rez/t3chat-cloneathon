@@ -29,7 +29,7 @@ export async function generateAIResponse(
 
     // Generate response
     const { text } = await generateText({
-      model: googleAI(model),
+      model: googleAI.generativeModel(model),
       messages: messages.map(msg => ({
         role: msg.role,
         content: msg.content
@@ -86,7 +86,7 @@ export async function* streamAIResponse(
 
     // Stream response
     const { textStream } = await streamText({
-      model: googleAI(model),
+      model: googleAI.generativeModel(model),
       messages: messages.map(msg => ({
         role: msg.role,
         content: msg.content
