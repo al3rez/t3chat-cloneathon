@@ -22,14 +22,9 @@ export async function generateAIResponse(
       };
     }
 
-    // Create Google AI instance with user's API key
-    const googleAI = google({
-      apiKey: apiKey
-    });
-
-    // Generate response using the correct AI SDK pattern
+    // Create Google AI instance with user's API key and generate response
     const { text } = await generateText({
-      model: googleAI.chat(model),
+      model: google(model, { apiKey }),
       messages: messages.map(msg => ({
         role: msg.role,
         content: msg.content
@@ -79,14 +74,9 @@ export async function* streamAIResponse(
       throw new Error('Google API key not found. Please add your API key in settings.');
     }
 
-    // Create Google AI instance with user's API key
-    const googleAI = google({
-      apiKey: apiKey
-    });
-
     // Stream response using the correct AI SDK pattern
     const { textStream } = await streamText({
-      model: googleAI.chat(model),
+      model: google(model, { apiKey }),
       messages: messages.map(msg => ({
         role: msg.role,
         content: msg.content
