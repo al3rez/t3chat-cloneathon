@@ -4,9 +4,10 @@ import { Message } from '../types';
 
 interface ChatMessageProps {
   message: Message;
+  selectedModel?: string;
 }
 
-export function ChatMessage({ message }: ChatMessageProps) {
+export function ChatMessage({ message, selectedModel }: ChatMessageProps) {
   const isUser = message.role === 'user';
   const [copied, setCopied] = useState(false);
 
@@ -28,6 +29,23 @@ export function ChatMessage({ message }: ChatMessageProps) {
   const handleEdit = () => {
     // TODO: Implement edit functionality
     console.log('Edit message');
+  };
+
+  // Model display mapping
+  const getModelDisplayName = (modelId: string) => {
+    const modelMap: Record<string, string> = {
+      'gemini-pro': 'Gemini 2.5 Flash',
+      'gemini-pro-2': 'Gemini 2.5 Pro',
+      'gpt-image-gen': 'GPT ImageGen',
+      'o4-mini': 'o4-mini',
+      'claude-4-sonnet': 'Claude 4 Sonnet',
+      'claude-4-sonnet-reasoning': 'Claude 4 Sonnet (Reasoning)',
+      'deepseek-r1': 'DeepSeek R1 (Llama Distilled)',
+      'gpt-4': 'GPT-4',
+      'gpt-3.5-turbo': 'GPT-3.5 Turbo',
+      'claude-3-sonnet': 'Claude 3 Sonnet'
+    };
+    return modelMap[modelId] || modelId;
   };
 
   if (isUser) {
@@ -122,7 +140,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
           </button>
           
           <span className="text-xs text-gray-500 ml-2">
-            o4-mini (medium)
+            {selectedModel ? getModelDisplayName(selectedModel) : 'o4-mini'}
           </span>
         </div>
       </div>

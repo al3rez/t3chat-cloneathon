@@ -102,7 +102,11 @@ export function ChatApp() {
               <div className="flex-1 overflow-y-auto p-6 pb-32 hide-scrollbar min-h-0">
                 <div className="max-w-4xl mx-auto">
                   {activeChat.messages.map((message) => (
-                    <ChatMessage key={message.id} message={message} />
+                    <ChatMessage 
+                      key={message.id} 
+                      message={message} 
+                      selectedModel={selectedModel}
+                    />
                   ))}
                   {isLoading && <LoadingMessage />}
                 </div>
