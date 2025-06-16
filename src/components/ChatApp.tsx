@@ -18,6 +18,7 @@ export function ChatApp() {
     selectedModel,
     isLoading,
     createNewChat,
+    createChatAndSendMessage,
     sendMessage,
     selectChat,
     deleteChat,
@@ -26,12 +27,8 @@ export function ChatApp() {
 
   const handleSendMessage = async (message: string, useWebSearch: boolean = false) => {
     if (!activeChat) {
-      // Wait for the new chat to be created before sending the message
-      const newChat = await createNewChat();
-      if (newChat) {
-        // Send the message to the newly created chat
-        sendMessage(message, useWebSearch);
-      }
+      // Use the new atomic function to create chat and send message
+      createChatAndSendMessage(message, useWebSearch);
     } else {
       sendMessage(message, useWebSearch);
     }
@@ -39,12 +36,8 @@ export function ChatApp() {
 
   const handlePromptClick = async (prompt: string) => {
     if (!activeChat) {
-      // Wait for the new chat to be created before sending the prompt
-      const newChat = await createNewChat();
-      if (newChat) {
-        // Send the prompt to the newly created chat
-        sendMessage(prompt, false);
-      }
+      // Use the new atomic function to create chat and send prompt
+      createChatAndSendMessage(prompt, false);
     } else {
       sendMessage(prompt, false);
     }

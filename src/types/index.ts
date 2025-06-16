@@ -40,11 +40,21 @@ export interface User {
   avatar?: string;
 }
 
-export type AIModel = 'gpt-4' | 'gpt-3.5-turbo' | 'claude-3-sonnet' | 'gemini-pro';
+export type AIModel = 
+  // OpenAI Models
+  | 'gpt-4o' 
+  | 'gpt-4o-mini'
+  | 'gpt-3.5-turbo'
+  // Google Models  
+  | 'gemini-pro'
+  | 'gemini-pro-2'
+  // Legacy models (commented out providers)
+  | 'gpt-4' // Keep for backwards compatibility
+  | 'claude-3-sonnet'; // Keep for backwards compatibility
 
 export interface ModelConfig {
   id: AIModel;
   name: string;
-  provider: 'openai' | 'anthropic' | 'google';
+  provider: 'openai' | 'anthropic' | 'google' | 'openrouter';
   description: string;
 }

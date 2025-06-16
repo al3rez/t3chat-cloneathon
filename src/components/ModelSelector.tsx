@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Check, Search, Filter, ChevronUp, Eye, Globe, FileText, Brain, Gem, Info } from 'lucide-react';
+import { ChevronDown, Check, Search, Filter, ChevronUp, Eye, Globe, FileText, Brain, Info, Lock } from 'lucide-react';
 import * as Popper from '@radix-ui/react-popper';
 import { AIModel, ModelConfig } from '../types';
+import { getAvailableProviders } from '../lib/apiKeys';
 
 interface ModelSelectorProps {
   selectedModel: AIModel;
@@ -21,84 +22,77 @@ interface ExtendedModelConfig extends ModelConfig {
 export function ModelSelector({ selectedModel, models, onModelSelect }: ModelSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [availableProviders, setAvailableProviders] = useState<string[]>([]);
   
-  const currentModel = models.find(m => m.id === selectedModel);
-
-  // Extended model data with capabilities
-  const extendedModels: ExtendedModelConfig[] = [
-    {
-      id: 'gemini-pro',
-      name: 'Gemini 2.5 Flash',
-      provider: 'google',
-      description: 'Fast and efficient Google AI model',
-      tier: 'free',
-      vision: true,
-      web: true,
-      files: true
-    },
-    {
-      id: 'gemini-pro-2',
-      name: 'Gemini 2.5 Pro',
-      provider: 'google',
-      description: 'Advanced Google AI model',
-      tier: 'premium',
-      vision: true,
-      web: true,
-      files: true,
-      reasoning: true
-    },
-    {
-      id: 'gpt-image-gen',
-      name: 'GPT ImageGen',
-      provider: 'openai',
-      description: 'Image generation model',
-      tier: 'premium',
-      vision: true
-    },
-    {
-      id: 'o4-mini',
-      name: 'o4-mini',
-      provider: 'openai',
-      description: 'Compact reasoning model',
-      tier: 'premium',
-      vision: true,
-      reasoning: true
-    },
-    {
-      id: 'claude-4-sonnet',
-      name: 'Claude 4 Sonnet',
-      provider: 'anthropic',
-      description: 'Advanced Anthropic model',
-      tier: 'premium',
-      vision: true,
-      files: true
-    },
-    {
-      id: 'claude-4-sonnet-reasoning',
-      name: 'Claude 4 Sonnet (Reasoning)',
-      provider: 'anthropic',
-      description: 'Reasoning-enhanced Claude model',
-      tier: 'premium',
-      vision: true,
-      files: true,
-      reasoning: true
-    },
-    {
-      id: 'deepseek-r1',
-      name: 'DeepSeek R1 (Llama Distilled)',
-      provider: 'deepseek',
-      description: 'Reasoning model',
-      tier: 'premium',
-      reasoning: true
+  // Load available providers on mount
+  useEffect(() => {
+    const loadProviders = async () => {
+      const providers = await getAvailableProviders();
+      setAvailableProviders(providers);
+    };
+    loadProviders();
+  }, []);
+  
+  // Enhanced model data with capabilities - merge with passed models
+  const enhanceModelWithCapabilities = (model: ModelConfig): ExtendedModelConfig => {
+    const capabilityMap: Record<string, Partial<ExtendedModelConfig>> = {
+      'gemini-pro': {
+        tier: 'free',
+        vision: true,
+        web: true,
+        files: true
+      },
+      'gemini-pro-2': {
+        tier: 'free',
+        vision: true,
+        web: true,
+        files: true,
+        reasoning: true
+      },
+      'gpt-4o': {
+        tier: 'free',
+        vision: true,
+        files: true,
+        reasoning: true
+      },
+      'gpt-4o-mini': {
+        tier: 'free',
+        vision: true,
+        files: true
+      },
+      'gpt-3.5-turbo': {
+        tier: 'free',
+        files: true
+      }
+    };
+    
+    return {
+      ...model,
+      tier: 'free', // All models are free with BYOK
+      ...capabilityMap[model.id]
+    };
+  };
+  
+  // Check if a model is available based on user's API keys
+  const isModelAvailable = (model: ModelConfig): boolean => {
+    if (model.provider === 'google') {
+      return availableProviders.includes('google');
     }
-  ];
+    if (model.provider === 'openai') {
+      return availableProviders.includes('openrouter');
+    }
+    return false; // Other providers not supported yet
+  };
+
+  const extendedModels = models.map(enhanceModelWithCapabilities);
+  const currentModel = extendedModels.find(m => m.id === selectedModel);
 
   const filteredModels = extendedModels.filter(model =>
     model.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const freeModels = filteredModels.filter(m => m.tier === 'free');
-  const premiumModels = filteredModels.filter(m => m.tier === 'premium');
+  // All models are available with BYOK implementation
+  const availableModels = filteredModels;
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
@@ -186,24 +180,47 @@ export function ModelSelector({ selectedModel, models, onModelSelect }: ModelSel
     if (model.web) capabilities.push('web');
     if (model.files) capabilities.push('files');
     if (model.reasoning) capabilities.push('reasoning');
+    
+    const isApiKeyMissing = !isModelAvailable(model);
+    const actuallyDisabled = isDisabled || isApiKeyMissing;
+    
+    const getTooltipText = () => {
+      if (isApiKeyMissing) {
+        if (model.provider === 'google') {
+          return 'Requires Google API key. Add it in Settings.';
+        }
+        if (model.provider === 'openai') {
+          return 'Requires OpenRouter API key. Add it in Settings.';
+        }
+      }
+      return '';
+    };
 
     return (
       <div
         role="menuitem"
         className={`relative select-none rounded-sm text-sm outline-none transition-colors focus:bg-gray-100 focus:text-gray-900 group flex flex-col items-start gap-1 p-3 ${
-          isDisabled 
+          actuallyDisabled 
             ? 'cursor-not-allowed opacity-50' 
             : 'cursor-pointer hover:bg-gray-50'
         }`}
         tabIndex={-1}
-        onClick={() => !isDisabled && onModelSelect(model.id)}
+        title={getTooltipText()}
+        onClick={() => {
+          if (!actuallyDisabled) {
+            onModelSelect(model.id);
+            setIsOpen(false);
+          }
+        }}
       >
         <div className="flex w-full items-center justify-between">
-          <div className={`flex items-center gap-2 pr-2 font-medium text-gray-600 transition-colors`}>
+          <div className={`flex items-center gap-2 pr-2 font-medium transition-colors ${
+            actuallyDisabled ? 'text-gray-400' : 'text-gray-600'
+          }`}>
             {getProviderIcon(model.provider)}
             <span className="w-fit">{model.name}</span>
-            {model.tier === 'premium' && (
-              <Gem className="size-3 text-pink-500" />
+            {isApiKeyMissing && (
+              <Lock className="size-3 text-gray-400" />
             )}
             <button className="p-1.5" onClick={(e) => e.stopPropagation()}>
               <Info className="size-3 text-gray-600" />
@@ -213,7 +230,9 @@ export function ModelSelector({ selectedModel, models, onModelSelect }: ModelSel
             {capabilities.map((capability) => (
               <div
                 key={capability}
-                className="relative flex h-6 w-6 items-center justify-center overflow-hidden rounded-md text-[--color]"
+                className={`relative flex h-6 w-6 items-center justify-center overflow-hidden rounded-md text-[--color] ${
+                  actuallyDisabled ? 'opacity-50' : ''
+                }`}
                 style={{ '--color': getCapabilityColor(capability) } as React.CSSProperties}
               >
                 <div className="absolute inset-0 bg-current opacity-20"></div>
@@ -222,6 +241,13 @@ export function ModelSelector({ selectedModel, models, onModelSelect }: ModelSel
             ))}
           </div>
         </div>
+        {isApiKeyMissing && (
+          <div className="w-full mt-1">
+            <p className="text-xs text-gray-400">
+              {model.provider === 'google' ? 'Add Google API key in Settings' : 'Add OpenRouter API key in Settings'}
+            </p>
+          </div>
+        )}
       </div>
     );
   };
@@ -245,14 +271,8 @@ export function ModelSelector({ selectedModel, models, onModelSelect }: ModelSel
         <Popper.Content
             side="top"
             sideOffset={8}
-            align="center"
-            onPointerDownOutside={() => setIsOpen(false)}
-            onEscapeKeyDown={() => setIsOpen(false)}
+            align="start"
             className="z-50 bg-white text-gray-900 shadow-lg border border-gray-200 rounded-lg overflow-hidden max-w-[calc(100vw-2rem)] transition-[height,width] ease-snappy max-sm:mx-4 sm:w-[420px] sm:rounded-lg max-h-[calc(100vh-80px)]"
-            style={{
-              height: '568px',
-              pointerEvents: 'auto'
-            }}
           >
           {/* Search Header */}
           <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3">
@@ -271,42 +291,19 @@ export function ModelSelector({ selectedModel, models, onModelSelect }: ModelSel
 
           {/* Content */}
           <div className="max-h-[400px] overflow-y-auto px-1.5">
-            {/* Upgrade Section */}
-            <div className="p-3">
-              <div className="flex flex-col space-y-3 rounded-md bg-gray-50 p-4 border border-gray-200">
-                <h3 className="text-lg font-semibold">Unlock all models + higher limits</h3>
-                <div className="flex items-end justify-between">
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-bold text-pink-500">$8</span>
-                    <span className="text-gray-900">/month</span>
-                  </div>
-                  <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 rounded-lg bg-pink-600 p-2 font-semibold text-white shadow hover:bg-pink-700 active:bg-pink-600 h-9 px-4 py-2">
-                    Upgrade now
-                  </button>
-                </div>
+            {/* BYOK - Models based on user's API keys */}
+            {availableModels.length > 0 ? (
+              availableModels.map((model) => {
+                const hasRequiredKey = isModelAvailable(model);
+                return (
+                  <ModelItem key={model.id} model={model} isDisabled={!hasRequiredKey} />
+                );
+              })
+            ) : (
+              <div className="p-4 text-center text-gray-500 text-sm">
+                No models found matching your search
               </div>
-            </div>
-
-            {/* Free Models */}
-            {freeModels.map((model) => (
-              <ModelItem key={model.id} model={model} />
-            ))}
-
-            {/* Premium Models */}
-            {premiumModels.map((model) => (
-              <ModelItem key={model.id} model={model} isDisabled={true} />
-            ))}
-          </div>
-
-          {/* Footer */}
-          <div className="sticky bottom-0 flex items-center justify-between bg-white border-t border-gray-200 px-4 py-2">
-            <button className="justify-center whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 hover:bg-gray-100 hover:text-gray-900 disabled:hover:bg-transparent disabled:hover:text-gray-500 h-9 px-4 py-2 flex items-center gap-2 pl-2 text-sm text-gray-600">
-              <ChevronUp className="h-4 w-4" />
-              Show all
-            </button>
-            <button className="inline-flex items-center justify-center whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 hover:bg-gray-100 hover:text-gray-900 disabled:hover:bg-transparent disabled:hover:text-gray-500 h-8 rounded-md text-xs relative gap-2 px-2 text-gray-600">
-              <Filter className="h-4 w-4" />
-            </button>
+            )}
           </div>
           </Popper.Content>
       )}

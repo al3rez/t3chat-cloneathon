@@ -2,7 +2,7 @@ import { supabase } from './supabase';
 
 export interface ApiKey {
   id: string;
-  provider: 'google' | 'openai' | 'anthropic';
+  provider: 'google' | 'openai' | 'anthropic' | 'openrouter';
   created_at: string;
   updated_at: string;
 }
@@ -18,7 +18,7 @@ function getUserSecret(userId: string): string {
   return `user_secret_${userId}_${import.meta.env.VITE_SUPABASE_ANON_KEY?.slice(0, 10)}`;
 }
 
-export async function saveApiKey(provider: 'google' | 'openai' | 'anthropic', apiKey: string): Promise<{ success: boolean; error?: string }> {
+export async function saveApiKey(provider: 'google' | 'openai' | 'anthropic' | 'openrouter', apiKey: string): Promise<{ success: boolean; error?: string }> {
   try {
     console.log(`Saving API key for provider: ${provider}`);
     
@@ -70,7 +70,7 @@ export async function saveApiKey(provider: 'google' | 'openai' | 'anthropic', ap
   }
 }
 
-export async function getApiKey(provider: 'google' | 'openai' | 'anthropic'): Promise<string | null> {
+export async function getApiKey(provider: 'google' | 'openai' | 'anthropic' | 'openrouter'): Promise<string | null> {
   try {
     console.log(`Getting API key for provider: ${provider}`);
     
@@ -163,7 +163,7 @@ export async function getUserApiKeys(): Promise<ApiKey[]> {
   }
 }
 
-export async function deleteApiKey(provider: 'google' | 'openai' | 'anthropic'): Promise<{ success: boolean; error?: string }> {
+export async function deleteApiKey(provider: 'google' | 'openai' | 'anthropic' | 'openrouter'): Promise<{ success: boolean; error?: string }> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -185,5 +185,57 @@ export async function deleteApiKey(provider: 'google' | 'openai' | 'anthropic'):
   } catch (error) {
     console.error('Delete API key error:', error);
     return { success: false, error: 'An unexpected error occurred' };
+  }
+}
+
+// Check if user has API key for a specific provider
+export async function hasApiKey(provider: 'google' | 'openai' | 'anthropic' | 'openrouter'): Promise<boolean> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return false;
+    }
+
+    const { data: apiKeyRecord, error } = await supabase
+      .from('api_keys')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('provider', provider)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('Check API key error:', error);
+      return false;
+    }
+
+    return !!apiKeyRecord;
+  } catch (error) {
+    console.error('Check API key error:', error);
+    return false;
+  }
+}
+
+// Check if user has the required API keys for all providers
+export async function getAvailableProviders(): Promise<string[]> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return [];
+    }
+
+    const { data: apiKeys, error } = await supabase
+      .from('api_keys')
+      .select('provider')
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error('Get available providers error:', error);
+      return [];
+    }
+
+    return apiKeys?.map(key => key.provider) || [];
+  } catch (error) {
+    console.error('Get available providers error:', error);
+    return [];
   }
 }

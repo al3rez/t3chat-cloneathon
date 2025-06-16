@@ -4,6 +4,7 @@ import { ModelConfig } from '../types';
 export const mockUser = null;
 
 export const availableModels: ModelConfig[] = [
+  // Google Models
   {
     id: 'gemini-pro',
     name: 'Gemini 2.5 Flash',
@@ -11,22 +12,29 @@ export const availableModels: ModelConfig[] = [
     description: 'Fast and efficient Google AI model'
   },
   {
-    id: 'gpt-4',
-    name: 'GPT-4',
+    id: 'gemini-pro-2',
+    name: 'Gemini 2.5 Pro',
+    provider: 'google',
+    description: 'Advanced Google AI model with reasoning'
+  },
+  // OpenAI Models (via OpenRouter)
+  {
+    id: 'gpt-4o',
+    name: 'GPT-4o',
     provider: 'openai',
     description: 'Most capable OpenAI model'
+  },
+  {
+    id: 'gpt-4o-mini',
+    name: 'GPT-4o Mini',
+    provider: 'openai',
+    description: 'Fast and cost-effective OpenAI model'
   },
   {
     id: 'gpt-3.5-turbo',
     name: 'GPT-3.5 Turbo',
     provider: 'openai',
     description: 'Fast and efficient OpenAI model'
-  },
-  {
-    id: 'claude-3-sonnet',
-    name: 'Claude 3 Sonnet',
-    provider: 'anthropic',
-    description: 'Anthropic\'s balanced AI model'
   }
 ];
 

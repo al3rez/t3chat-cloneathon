@@ -138,6 +138,171 @@ export function useChat() {
     }
   }, [selectedModel, user]);
 
+  // Function to create a new chat and send the first message atomically
+  const createChatAndSendMessage = useCallback(async (content: string, useWebSearch: boolean = false) => {
+    if (!user) {
+      console.log('No user, cannot create chat');
+      return;
+    }
+
+    try {
+      console.log('Creating new chat and sending first message for user:', user.id);
+      
+      const { data: thread, error } = await supabase
+        .from('threads')
+        .insert({
+          user_id: user.id,
+          title: content.slice(0, 50) + (content.length > 50 ? '...' : ''),
+          model: selectedModel
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating thread:', error);
+        return;
+      }
+
+      console.log('Created thread:', thread);
+
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        content,
+        role: 'user',
+        timestamp: new Date(),
+        thread_id: thread.id
+      };
+
+      const newChat: Chat = {
+        id: thread.id,
+        title: thread.title,
+        model: thread.model,
+        createdAt: new Date(thread.created_at),
+        updatedAt: new Date(thread.updated_at),
+        messages: [userMessage]
+      };
+
+      setChats(prev => [newChat, ...prev]);
+      setActiveChat(newChat);
+      setIsLoading(true);
+
+      try {
+        // Save user message to database
+        const { error: messageError } = await supabase
+          .from('messages')
+          .insert({
+            thread_id: thread.id,
+            content,
+            role: 'user'
+          });
+
+        if (messageError) {
+          console.error('Error saving user message:', messageError);
+        }
+
+        // Generate AI response
+        const googleModelId = getGoogleModelId(selectedModel);
+        const conversationHistory = [{ role: 'user', content }];
+
+        let aiResult;
+        if (useWebSearch && selectedModel.includes('gemini')) {
+          console.log('Using web search for AI response');
+          aiResult = await generateAIResponseWithSearch(conversationHistory, googleModelId);
+        } else {
+          console.log('Using standard AI response');
+          aiResult = await generateAIResponse(conversationHistory, googleModelId);
+        }
+
+        let aiResponse: string;
+        let sources: any[] = [];
+        
+        if (aiResult.success && aiResult.content) {
+          aiResponse = aiResult.content;
+          sources = aiResult.sources || [];
+        } else {
+          aiResponse = aiResult.error || 'Sorry, I encountered an error while processing your request.';
+        }
+
+        // Add sources information if available
+        if (sources && sources.length > 0) {
+          aiResponse += '\n\n**Sources:**\n';
+          sources.forEach((source, index) => {
+            if (source.uri) {
+              aiResponse += `${index + 1}. [${source.title || 'Source'}](${source.uri})\n`;
+            }
+          });
+        }
+        
+        const aiMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          content: aiResponse,
+          role: 'assistant',
+          timestamp: new Date(),
+          thread_id: thread.id
+        };
+
+        const finalChat = {
+          ...newChat,
+          messages: [userMessage, aiMessage],
+          updatedAt: new Date()
+        };
+
+        setActiveChat(finalChat);
+        setChats(prev => prev.map(chat => chat.id === thread.id ? finalChat : chat));
+        setIsLoading(false);
+
+        // Save AI response to database
+        const { error: aiMessageError } = await supabase
+          .from('messages')
+          .insert({
+            thread_id: thread.id,
+            content: aiResponse,
+            role: 'assistant'
+          });
+
+        if (aiMessageError) {
+          console.error('Error saving AI message:', aiMessageError);
+        }
+
+        // Update thread updated_at
+        const { error: updateError } = await supabase
+          .from('threads')
+          .update({ updated_at: new Date().toISOString() })
+          .eq('id', thread.id);
+
+        if (updateError) {
+          console.error('Error updating thread timestamp:', updateError);
+        }
+
+        // Reload chats to ensure consistency
+        await loadChats();
+      } catch (error) {
+        console.error('Error processing message:', error);
+        setIsLoading(false);
+        
+        // Show error message to user
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          content: 'Sorry, I encountered an error while processing your request. Please check your API key settings.',
+          role: 'assistant',
+          timestamp: new Date(),
+          thread_id: thread.id
+        };
+
+        const errorChat = {
+          ...newChat,
+          messages: [userMessage, errorMessage],
+          updatedAt: new Date()
+        };
+
+        setActiveChat(errorChat);
+        setChats(prev => prev.map(chat => chat.id === thread.id ? errorChat : chat));
+      }
+    } catch (error) {
+      console.error('Error creating new chat and sending message:', error);
+    }
+  }, [selectedModel, user, loadChats]);
+
   const sendMessage = useCallback(async (content: string, useWebSearch: boolean = false) => {
     if (!activeChat || !user) {
       console.log('No active chat or user');
@@ -340,6 +505,7 @@ export function useChat() {
     selectedModel,
     isLoading,
     createNewChat,
+    createChatAndSendMessage,
     sendMessage,
     selectChat,
     deleteChat,

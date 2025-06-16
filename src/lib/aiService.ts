@@ -1,4 +1,5 @@
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { generateText, streamText } from 'ai';
 import { getApiKey } from './apiKeys';
 
@@ -26,35 +27,47 @@ export async function generateAIResponse(
     console.log('Model requested:', model);
     console.log('Messages count:', messages.length);
     
-    // Get the user's Google API key
-    console.log('Retrieving Google API key...');
-    const apiKey = await getApiKey('google');
+    // Determine provider based on model
+    const isGeminiModel = model.includes('gemini');
+    const provider = isGeminiModel ? 'google' : 'openrouter';
+    
+    console.log(`Retrieving ${provider} API key...`);
+    const apiKey = await getApiKey(provider);
     
     if (!apiKey) {
-      console.log('❌ No Google API key found');
+      console.log(`❌ No ${provider} API key found`);
       return {
         success: false,
-        error: 'Google API key not found. Please add your API key in settings.'
+        error: `${provider} API key not found. Please add your API key in settings.`
       };
     }
 
-    console.log('✅ Google API key retrieved successfully');
+    console.log(`✅ ${provider} API key retrieved successfully`);
     console.log('API key length:', apiKey.length);
     console.log('API key prefix:', apiKey.substring(0, 10) + '...');
 
-    // Create custom Google provider instance with user's API key
-    console.log('Creating custom Google provider instance...');
-    const google = createGoogleGenerativeAI({
-      apiKey: apiKey,
-      baseURL: 'https://generativelanguage.googleapis.com/v1beta'
-    });
+    let aiModel;
     
-    console.log('Creating Google AI model instance...');
-    const googleModel = google(model);
+    if (isGeminiModel) {
+      // Create Google provider instance
+      console.log('Creating custom Google provider instance...');
+      const google = createGoogleGenerativeAI({
+        apiKey: apiKey,
+        baseURL: 'https://generativelanguage.googleapis.com/v1beta'
+      });
+      aiModel = google(getGoogleModelId(model));
+    } else {
+      // Create OpenRouter provider instance
+      console.log('Creating OpenRouter provider instance...');
+      const openrouter = createOpenRouter({
+        apiKey: apiKey,
+      });
+      aiModel = openrouter(getOpenRouterModelId(model));
+    }
     
     console.log('Generating text with AI model...');
     const { text } = await generateText({
-      model: googleModel,
+      model: aiModel,
       messages: messages.map(msg => ({
         role: msg.role,
         content: msg.content
@@ -84,14 +97,14 @@ export async function generateAIResponse(
         error.message?.includes('API_KEY_INVALID')) {
       return {
         success: false,
-        error: 'Invalid or missing Google API key. Please check your API key in settings.'
+        error: 'Invalid or missing API key. Please check your API key in settings.'
       };
     }
     
     if (error.message?.includes('quota') || error.message?.includes('QUOTA_EXCEEDED')) {
       return {
         success: false,
-        error: 'API quota exceeded. Please check your Google Cloud billing.'
+        error: 'API quota exceeded. Please check your billing.'
       };
     }
 
@@ -100,14 +113,7 @@ export async function generateAIResponse(
         error.message?.includes('PERMISSION_DENIED')) {
       return {
         success: false,
-        error: 'API access denied. Please check your Google API key permissions.'
-      };
-    }
-
-    if (error.message?.includes('INVALID_ARGUMENT')) {
-      return {
-        success: false,
-        error: 'Invalid request parameters. Please try again.'
+        error: 'API access denied. Please check your API key permissions.'
       };
     }
 
@@ -236,24 +242,38 @@ export async function* streamAIResponse(
   try {
     console.log('Starting AI response streaming...');
     
-    // Get the user's Google API key
-    const apiKey = await getApiKey('google');
+    // Determine provider based on model
+    const isGeminiModel = model.includes('gemini');
+    const provider = isGeminiModel ? 'google' : 'openrouter';
+    
+    const apiKey = await getApiKey(provider);
     
     if (!apiKey) {
-      throw new Error('Google API key not found. Please add your API key in settings.');
+      throw new Error(`${provider} API key not found. Please add your API key in settings.`);
     }
 
-    console.log('Streaming with Google AI model...');
+    console.log(`Streaming with ${provider} AI model...`);
 
-    // Create custom Google provider instance with user's API key
-    const google = createGoogleGenerativeAI({
-      apiKey: apiKey,
-      baseURL: 'https://generativelanguage.googleapis.com/v1beta'
-    });
+    let aiModel;
+    
+    if (isGeminiModel) {
+      // Create Google provider instance
+      const google = createGoogleGenerativeAI({
+        apiKey: apiKey,
+        baseURL: 'https://generativelanguage.googleapis.com/v1beta'
+      });
+      aiModel = google(getGoogleModelId(model));
+    } else {
+      // Create OpenRouter provider instance
+      const openrouter = createOpenRouter({
+        apiKey: apiKey,
+      });
+      aiModel = openrouter(getOpenRouterModelId(model));
+    }
 
     // Stream response using the correct AI SDK pattern
     const { textStream } = await streamText({
-      model: google(model),
+      model: aiModel,
       messages: messages.map(msg => ({
         role: msg.role,
         content: msg.content
@@ -282,4 +302,16 @@ export function getGoogleModelId(modelId: string): string {
   };
   
   return modelMap[modelId] || 'gemini-1.5-flash';
+}
+
+// Map internal model IDs to OpenRouter model IDs
+export function getOpenRouterModelId(modelId: string): string {
+  const modelMap: Record<string, string> = {
+    'gpt-4o': 'openai/gpt-4o',
+    'gpt-4o-mini': 'openai/gpt-4o-mini',
+    'gpt-3.5-turbo': 'openai/gpt-3.5-turbo',
+    'gpt-4': 'openai/gpt-4' // Legacy support
+  };
+  
+  return modelMap[modelId] || 'openai/gpt-4o';
 }

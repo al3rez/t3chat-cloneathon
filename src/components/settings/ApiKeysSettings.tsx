@@ -4,7 +4,7 @@ import { saveApiKey, getUserApiKeys, deleteApiKey, ApiKey } from '../../lib/apiK
 
 interface ApiKeyConfig {
   id: string;
-  provider: 'google' | 'openai' | 'anthropic';
+  provider: 'google' | 'openai' | 'openrouter';
   name: string;
   value: string;
   isVisible: boolean;
@@ -22,30 +22,19 @@ export function ApiKeysSettings() {
       name: 'Google API Key',
       value: '',
       isVisible: false,
-      models: ['Gemini 1.5 Flash', 'Gemini 1.5 Pro', 'Gemini 2.0 Flash', 'Gemini 2.5 Flash', 'Gemini 2.5 Pro'],
+      models: ['Gemini 2.5 Flash', 'Gemini 2.5 Pro'],
       consoleUrl: 'https://aistudio.google.com/app/apikey',
       hasChanges: false,
       isSaved: false
     },
     {
-      id: 'openai',
-      provider: 'openai',
-      name: 'OpenAI API Key',
+      id: 'openrouter',
+      provider: 'openrouter',
+      name: 'OpenRouter API Key (OpenAI / OpenRouter)',
       value: '',
       isVisible: false,
-      models: ['GPT-4', 'GPT-3.5 Turbo', 'o1-mini'],
-      consoleUrl: 'https://platform.openai.com/api-keys',
-      hasChanges: false,
-      isSaved: false
-    },
-    {
-      id: 'anthropic',
-      provider: 'anthropic',
-      name: 'Anthropic API Key',
-      value: '',
-      isVisible: false,
-      models: ['Claude 3.5 Sonnet', 'Claude 3 Haiku', 'Claude 4 Sonnet'],
-      consoleUrl: 'https://console.anthropic.com',
+      models: ['GPT-4o', 'GPT-4o Mini', 'GPT-3.5 Turbo'],
+      consoleUrl: 'https://openrouter.ai/keys',
       hasChanges: false,
       isSaved: false
     }
@@ -257,8 +246,7 @@ export function ApiKeysSettings() {
                   className="text-purple-600 hover:text-purple-700 ml-1 inline-flex items-center transition-colors"
                 >
                   {apiKey.provider === 'google' ? 'Google AI Studio' : 
-                   apiKey.provider === 'openai' ? 'OpenAI Platform' : 
-                   'Anthropic Console'}
+                   'OpenRouter Dashboard'}
                   <ExternalLink className="h-3 w-3 ml-1" />
                 </a>
               </div>
