@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Check, Search, Filter, ChevronUp, Eye, Globe, FileText, Brain, Gem, Info } from 'lucide-react';
+import * as Popper from '@radix-ui/react-popper';
 import { AIModel, ModelConfig } from '../types';
 
 interface ModelSelectorProps {
@@ -20,7 +21,6 @@ interface ExtendedModelConfig extends ModelConfig {
 export function ModelSelector({ selectedModel, models, onModelSelect }: ModelSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const dropdownRef = useRef<HTMLDivElement>(null);
   
   const currentModel = models.find(m => m.id === selectedModel);
 
@@ -101,18 +101,18 @@ export function ModelSelector({ selectedModel, models, onModelSelect }: ModelSel
   const premiumModels = filteredModels.filter(m => m.tier === 'premium');
 
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
         setIsOpen(false);
       }
-    }
+    };
 
     if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleEscape);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
     };
   }, [isOpen]);
 
@@ -227,32 +227,33 @@ export function ModelSelector({ selectedModel, models, onModelSelect }: ModelSel
   };
 
   return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="inline-flex items-center justify-center whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-purple-500 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-gray-100 hover:text-gray-900 disabled:hover:bg-transparent disabled:hover:text-gray-500 h-8 rounded-md text-xs relative gap-2 px-2 py-1.5 -mb-2 text-gray-600"
-        type="button"
-        aria-haspopup="menu"
-        aria-expanded={isOpen}
-      >
-        <div className="text-left text-sm font-medium">{currentModel?.name}</div>
-        <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
+    <Popper.Root>
+      <Popper.Anchor asChild>
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="inline-flex items-center justify-center whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-purple-500 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-gray-100 hover:text-gray-900 disabled:hover:bg-transparent disabled:hover:text-gray-500 h-8 rounded-md text-xs relative gap-2 px-2 py-1.5 -mb-2 text-gray-600"
+          type="button"
+          aria-haspopup="menu"
+          aria-expanded={isOpen}
+        >
+          <div className="text-left text-sm font-medium">{currentModel?.name}</div>
+          <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        </button>
+      </Popper.Anchor>
 
       {isOpen && (
-        <div className="fixed z-50 bg-white text-gray-900 shadow-lg border border-gray-200 rounded-lg overflow-hidden max-w-[calc(100vw-2rem)] transition-[height,width] ease-snappy max-sm:mx-4 sm:w-[420px] sm:rounded-lg max-h-[calc(100vh-80px)]"
-          style={{
-            position: 'fixed',
-            left: '50%',
-            top: '50%',
-            transform: 'translate(-50%, -50%)',
-            minWidth: 'max-content',
-            willChange: 'transform',
-            zIndex: 50,
-            height: '568px',
-            pointerEvents: 'auto'
-          }}
-        >
+        <Popper.Content
+            side="top"
+            sideOffset={8}
+            align="center"
+            onPointerDownOutside={() => setIsOpen(false)}
+            onEscapeKeyDown={() => setIsOpen(false)}
+            className="z-50 bg-white text-gray-900 shadow-lg border border-gray-200 rounded-lg overflow-hidden max-w-[calc(100vw-2rem)] transition-[height,width] ease-snappy max-sm:mx-4 sm:w-[420px] sm:rounded-lg max-h-[calc(100vh-80px)]"
+            style={{
+              height: '568px',
+              pointerEvents: 'auto'
+            }}
+          >
           {/* Search Header */}
           <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3">
             <div className="flex items-center">
@@ -307,8 +308,8 @@ export function ModelSelector({ selectedModel, models, onModelSelect }: ModelSel
               <Filter className="h-4 w-4" />
             </button>
           </div>
-        </div>
+          </Popper.Content>
       )}
-    </div>
+    </Popper.Root>
   );
 }
