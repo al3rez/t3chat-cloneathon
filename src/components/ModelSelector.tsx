@@ -242,11 +242,13 @@ export function ModelSelector({ selectedModel, models, onModelSelect }: ModelSel
           </div>
         </div>
         {isApiKeyMissing && (
-          <div className="w-full mt-1">
-            <p className="text-xs text-gray-400">
-              {model.provider === 'google' ? 'Add Google API key in Settings' : 'Add OpenRouter API key in Settings'}
-            </p>
-          </div>
+            <span className="text-xs text-gray-400">
+              {model.provider === 'google' ? (
+                <>Needs Google API key - <a href="/settings/api-keys" className="text-purple-600 hover:text-purple-700 underline">Settings</a></>
+              ) : (
+                <>Needs OpenAI/OpenRouter API key - <a href="/settings/api-keys" className="text-purple-600 hover:text-purple-700 underline">Settings</a></>
+              )}
+            </span>
         )}
       </div>
     );
