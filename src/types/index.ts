@@ -22,6 +22,10 @@ export interface Message {
   role: 'user' | 'assistant';
   timestamp: Date;
   thread_id?: string;
+  sources?: Array<{
+    uri?: string;
+    title?: string;
+  }>;
 }
 
 export interface DatabaseMessage {

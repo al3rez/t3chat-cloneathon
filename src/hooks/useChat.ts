@@ -223,22 +223,14 @@ export function useChat() {
           aiResponse = aiResult.error || 'Sorry, I encountered an error while processing your request.';
         }
 
-        // Add sources information if available
-        if (sources && sources.length > 0) {
-          aiResponse += '\n\n**Sources:**\n';
-          sources.forEach((source, index) => {
-            if (source.uri) {
-              aiResponse += `${index + 1}. [${source.title || 'Source'}](${source.uri})\n`;
-            }
-          });
-        }
-        
+        // Don't add sources to content - they'll be handled separately in UI
         const aiMessage: Message = {
           id: (Date.now() + 1).toString(),
           content: aiResponse,
           role: 'assistant',
           timestamp: new Date(),
-          thread_id: thread.id
+          thread_id: thread.id,
+          sources: sources
         };
 
         const finalChat = {
@@ -387,22 +379,14 @@ export function useChat() {
         aiResponse = aiResult.error || 'Sorry, I encountered an error while processing your request.';
       }
 
-      // Add sources information if available
-      if (sources && sources.length > 0) {
-        aiResponse += '\n\n**Sources:**\n';
-        sources.forEach((source, index) => {
-          if (source.uri) {
-            aiResponse += `${index + 1}. [${source.title || 'Source'}](${source.uri})\n`;
-          }
-        });
-      }
-      
+      // Don't add sources to content - they'll be handled separately in UI
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         content: aiResponse,
         role: 'assistant',
         timestamp: new Date(),
-        thread_id: activeChat.id
+        thread_id: activeChat.id,
+        sources: sources
       };
 
       const finalChat = {

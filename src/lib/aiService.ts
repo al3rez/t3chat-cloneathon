@@ -21,7 +21,7 @@ export interface AIResponseWithSources {
 export async function generateAIResponse(
   messages: ChatMessage[],
   model: string = 'gemini-1.5-flash'
-): Promise<{ success: boolean; content?: string; error?: string }> {
+): Promise<AIResponseWithSources> {
   try {
     console.log('=== AI Response Generation Started ===');
     console.log('Model requested:', model);
@@ -66,7 +66,7 @@ export async function generateAIResponse(
     }
     
     console.log('Generating text with AI model...');
-    const { text } = await generateText({
+    const { text, sources, providerMetadata } = await generateText({
       model: aiModel,
       messages: messages.map(msg => ({
         role: msg.role,
@@ -78,11 +78,13 @@ export async function generateAIResponse(
 
     console.log('✅ AI response generated successfully');
     console.log('Response length:', text.length);
+    console.log('Sources found:', sources);
     console.log('=== AI Response Generation Completed ===');
 
     return {
       success: true,
-      content: text
+      content: text,
+      sources: sources || []
     };
   } catch (error: any) {
     console.error('❌ AI generation error:', error);
@@ -172,7 +174,7 @@ export async function generateAIResponseWithSearch(
 
     console.log('✅ AI response with web search generated successfully');
     console.log('Response length:', text.length);
-    console.log('Sources found:', sources?.length || 0);
+    console.log('Sources found:', sources);
     
     // Access the grounding metadata
     const metadata = providerMetadata?.google;
