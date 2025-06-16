@@ -83,7 +83,7 @@ export function ChatApp() {
               >
                 <Menu className="w-5 h-5 text-gray-600" />
               </button>
-              <h1 className="text-xl font-semibold text-gray-800">T3.chat</h1>
+              <h1 className="text-xl font-semibold text-gray-800">Duh Chat</h1>
             </div>
           </div>
         </header>
