@@ -141,7 +141,7 @@ export async function generateAIResponseWithSearch(
       baseURL: "https://generativelanguage.googleapis.com/v1beta",
     });
 
-    const googleModel = google(model, {
+    const googleModel = google(getGoogleModelId(model), {
       useSearchGrounding: true,
     });
 
@@ -278,14 +278,16 @@ export async function* streamAIResponse(
 // Map internal model IDs to Google model IDs
 export function getGoogleModelId(modelId: string): string {
   const modelMap: Record<string, string> = {
-    "gemini-pro": "gemini-1.5-flash",
-    "gemini-pro-2": "gemini-1.5-pro",
-    "gemini-2.5-flash": "gemini-1.5-flash", // Use available model
-    "gemini-2.5-pro": "gemini-1.5-pro", // Use available model
-    "gemini-2.0-flash": "gemini-1.5-flash", // Use available model
+    "gemini-pro": "models/gemini-1.5-flash",
+    "gemini-pro-2": "models/gemini-1.5-pro",
+    "gemini-2.5-flash": "models/gemini-2.5-flash",
+    "gemini-2.5-pro": "models/gemini-2.5-pro",
+    "gemini-2.0-flash": "models/gemini-2.0-flash-exp",
+    "gemini-1.5-flash-001": "models/gemini-1.5-flash-001",
+    "gemini-1.5-pro-001": "models/gemini-1.5-pro-001",
   };
 
-  return modelMap[modelId] || "gemini-1.5-flash";
+  return modelMap[modelId] || "models/gemini-1.5-flash";
 }
 
 // Map internal model IDs to OpenRouter model IDs

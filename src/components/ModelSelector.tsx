@@ -49,6 +49,38 @@ export function ModelSelector({ selectedModel, models, onModelSelect }: ModelSel
         files: true,
         reasoning: true
       },
+      'gemini-2.5-flash': {
+        tier: 'free',
+        vision: true,
+        web: true,
+        files: true
+      },
+      'gemini-2.5-pro': {
+        tier: 'free',
+        vision: true,
+        web: true,
+        files: true,
+        reasoning: true
+      },
+      'gemini-2.0-flash': {
+        tier: 'free',
+        vision: true,
+        web: true,
+        files: true
+      },
+      'gemini-1.5-flash-001': {
+        tier: 'free',
+        vision: true,
+        web: true,
+        files: true
+      },
+      'gemini-1.5-pro-001': {
+        tier: 'free',
+        vision: true,
+        web: true,
+        files: true,
+        reasoning: true
+      },
       'gpt-4o': {
         tier: 'free',
         vision: true,
