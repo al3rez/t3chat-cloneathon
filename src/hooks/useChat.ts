@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { Chat, Message, AIModel, Thread, DatabaseMessage } from '../types';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './useAuth';
-import { generateAIResponse, generateAIResponseWithSearch, getGoogleModelId } from '../lib/aiService';
+import { generateAIResponse, generateAIResponseWithSearch } from '../lib/aiService';
 
 export function useChat() {
   const [chats, setChats] = useState<Chat[]>([]);
@@ -201,16 +201,15 @@ export function useChat() {
         }
 
         // Generate AI response
-        const googleModelId = getGoogleModelId(selectedModel);
         const conversationHistory = [{ role: 'user', content }];
 
         let aiResult;
         if (useWebSearch && selectedModel.includes('gemini')) {
           console.log('Using web search for AI response');
-          aiResult = await generateAIResponseWithSearch(conversationHistory, googleModelId);
+          aiResult = await generateAIResponseWithSearch(conversationHistory, selectedModel);
         } else {
           console.log('Using standard AI response');
-          aiResult = await generateAIResponse(conversationHistory, googleModelId);
+          aiResult = await generateAIResponse(conversationHistory, selectedModel);
         }
 
         let aiResponse: string;
@@ -354,7 +353,6 @@ export function useChat() {
       }
 
       // Generate AI response using the user's API key
-      const googleModelId = getGoogleModelId(selectedModel);
       const conversationHistory = [
         ...activeChat.messages.map(msg => ({ role: msg.role, content: msg.content })),
         { role: 'user', content }
@@ -363,10 +361,10 @@ export function useChat() {
       let aiResult;
       if (useWebSearch && selectedModel.includes('gemini')) {
         console.log('Using web search for AI response');
-        aiResult = await generateAIResponseWithSearch(conversationHistory, googleModelId);
+        aiResult = await generateAIResponseWithSearch(conversationHistory, selectedModel);
       } else {
         console.log('Using standard AI response');
-        aiResult = await generateAIResponse(conversationHistory, googleModelId);
+        aiResult = await generateAIResponse(conversationHistory, selectedModel);
       }
 
       let aiResponse: string;
