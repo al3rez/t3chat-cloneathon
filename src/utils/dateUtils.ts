@@ -10,12 +10,12 @@ export function groupChatsByDate(chats: Array<{ createdAt: Date }>) {
     yesterday: [] as typeof chats,
     lastWeek: [] as typeof chats,
     lastMonth: [] as typeof chats,
-    older: [] as typeof chats
+    older: [] as typeof chats,
   };
 
-  chats.forEach(chat => {
+  chats.forEach((chat) => {
     const chatDate = new Date(chat.createdAt);
-    
+
     if (chatDate >= today) {
       groups.today.push(chat);
     } else if (chatDate >= yesterday) {
@@ -33,10 +33,10 @@ export function groupChatsByDate(chats: Array<{ createdAt: Date }>) {
 }
 
 export function formatDate(date: Date): string {
-  return new Intl.DateTimeFormat('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    month: 'short',
-    day: 'numeric'
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    month: "short",
+    day: "numeric",
   }).format(date);
 }

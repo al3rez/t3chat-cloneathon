@@ -30,12 +30,12 @@ export function ChatMessage({ message, selectedModel }: ChatMessageProps) {
 
   const handleRetry = () => {
     // TODO: Implement retry functionality
-    console.log('Retry message');
+
   };
 
   const handleEdit = () => {
     // TODO: Implement edit functionality
-    console.log('Edit message');
+
   };
 
   // Model display mapping
